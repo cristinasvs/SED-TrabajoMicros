@@ -24,7 +24,7 @@
 /* USER CODE BEGIN Includes */
 
 
-//Incluir librería del youtuber
+//Incluir librería del teclado
 #include "MY_Keypad4x4.h"
 //Incluir librería booleana
 #include <stdbool.h>
@@ -69,6 +69,7 @@ static void MX_TIM4_Init(void);
 /* USER CODE BEGIN 0 */
 bool mySwitches[16];
 uint8_t adcVal;
+int ledState=0;
 
 /* USER CODE END 0 */
 
@@ -155,13 +156,20 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  //Leer continuamente las teclas del keypad
-	  Keypad4x4_ReadKeypad(mySwitches);
+	  Keypad4x4_ReadKeypad(mySwitches);			//Función de lectura de botones
 	  HAL_Delay(100);
-	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-	  HAL_Delay(500);
 
+	  //Botón 1: Luces de la cocina
 	  if(mySwitches[0]){
 		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_11);
+	  }
+	  //Botón 2: Luces del salón
+	  if(mySwitches[1]){
+		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_10);
+	  }
+	  //Botón 3: Luces del salón
+	  if(mySwitches[2]){
+		  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_9);
 	  }
 
 
@@ -173,12 +181,35 @@ int main(void)
 
 	  HAL_ADC_Stop(&hadc1);
 
-	  if(adcVal < 'S')
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
+	  if(adcVal < 'S')									//Si la luminosidad es baja (es de noche),
+		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, 1);		//se encienden las luces del jardín
 	  else
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
+		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, 0);		//En caso contrario se apagan
 
 	  HAL_Delay(1000);
+
+
+
+	  //BAJAR LEDs
+	  	  if (mySwitches[3]) {
+	  		  switch(ledState){
+	  		  case 0:
+	  			  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 90); //ciclo de trabajo al 90%
+	  			  ledState++;
+	  			  break;
+	  		  case 1:
+	  			  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 10); //ciclo de trabajo al 10%
+	  			  ledState++;
+	  			  break;
+	  		  case 2:
+	  			  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0); //ciclo de trabajo al 0%
+	  			  ledState++;//se avanza de estado
+	  			  break;
+	  		}
+	  		if(ledState==3)ledState=0;
+	  	  }
+
+
   }
   /* USER CODE END 3 */
 }
@@ -367,7 +398,7 @@ static void MX_TIM4_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 100;
+  sConfigOC.Pulse = 50;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
@@ -396,9 +427,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
-                          |GPIO_PIN_15|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
@@ -406,12 +437,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD11 PD12 PD13 PD14
-                           PD15 PD4 PD5 PD6
-                           PD7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
-                          |GPIO_PIN_15|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7;
+  /*Configure GPIO pins : PD8 PD9 PD10 PD11
+                           PD12 PD13 PD14 PD15
+                           PD4 PD5 PD6 PD7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -439,9 +470,9 @@ HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   /* NOTE: This function Should not be modified, when the callback is needed,
            the HAL_GPIO_EXTI_Callback could be implemented in the user file
    */
-  /*HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-  for(int i=0;i<1000;i++);*/
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, GPIO_PIN_RESET);	//Apaga luz de la cocina
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, GPIO_PIN_RESET);	//Apaga luz del salón
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);		//Apaga luz del cuarto
 }
 
 
