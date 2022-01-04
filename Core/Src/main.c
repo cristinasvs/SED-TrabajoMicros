@@ -191,21 +191,19 @@ int main(void)
 
 
 	  //BAJAR LEDs
-	  	  if (mySwitches[3]) {
+	  	  if (mySwitches[13]) {	//Si se pulsa el botón 0
 	  		  switch(ledState){
 	  		  case 0:
-	  			  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 90); //ciclo de trabajo al 90%
-	  			  ledState++;
+	  			  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0); //ciclo de trabajo al 90%
 	  			  break;
 	  		  case 1:
-	  			  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 10); //ciclo de trabajo al 10%
-	  			  ledState++;
+	  			  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 90); //ciclo de trabajo al 10%
 	  			  break;
 	  		  case 2:
-	  			  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0); //ciclo de trabajo al 0%
-	  			  ledState++;//se avanza de estado
+	  			  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 10); //ciclo de trabajo al 0%
 	  			  break;
 	  		}
+	  		ledState++; 	  	 //se avanza de estado
 	  		if(ledState==3)ledState=0;
 	  	  }
 
@@ -473,6 +471,11 @@ HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, GPIO_PIN_RESET);	//Apaga luz de la cocina
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, GPIO_PIN_RESET);	//Apaga luz del salón
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);		//Apaga luz del cuarto
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);		//Apaga las luces del jardín
+  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);			//Apaga la luz PWM
+  ledState = 0;												//pone a 0 el estado del LED PWM
+
+
 }
 
 
